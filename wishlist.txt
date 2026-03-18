@@ -1,0 +1,24 @@
+First steps:
+- param tuning over can
+- auto encoder offset tuning
+- auto current offset tuning
+- clean code, clean file structure, simple clear documentation
+- flash parameter storage
+
+
+nice to have:
+- auto pi-tuning
+- state machine
+- watchdog
+- telemetry
+- startup sanity checks
+
+
+Workflow (if not re-tuning / calibrating)
+- boot ( loads params from flash )
+
+Workflow if calibrating:
+- boot ( loads params from flash )
+- run current sensors and encoder auto-calibration script
+- tune pi controllers
+- save new params to flash 

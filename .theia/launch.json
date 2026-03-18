@@ -1,0 +1,21 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Driverlib Empty CPU1 Example CCS Project",
+      "type": "ccs-debug",
+      "request": "launch",
+      "projectInfo": {
+        "name": "Driverlib Empty CPU1 Example CCS Project",
+        "resourceId": "/Driverlib Empty CPU1 Example CCS Project"
+      },
+      "launchSettings": {
+        "coresToLoadForProjectLaunch": [
+          "C28xx_CPU1"
+        ]
+      }
+    }
+  ]
+}
