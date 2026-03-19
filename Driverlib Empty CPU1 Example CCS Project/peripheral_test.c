@@ -29,36 +29,77 @@
 //      J12         | CANH/CANL       | ~1 Hz CAN frames (ID 0x100)
 //
 //   CCS EXPRESSIONS:
-//      adcResults[0..3]  — Ia, Ib, Ic, Vdc (updated at 20 kHz)
-//      epwmIsrCount      — EPWM4 current loop counter (20 kHz)
-//      bissSpiRxData     — last BiSS SPI read (updated at 20 kHz)
-//      bissRxCount       — BiSS RX ISR counter (20 kHz)
+//      adcResults[0..2]  — Ia, Ib, Ic raw counts (updated at 20 kHz)
+//      vdcVolts          — Calibrated DC bus voltage in V (updated at 20 kHz)
 //      timer0IsrCount    — Timer0 base rate counter (2 kHz)
-//      canTxCount        — CAN messages sent (~1 Hz)
-//      loopCount         — main loop iterations (~1 Hz)
 //
 //#############################################################################
 
 #include "driverlib.h"
 #include "device.h"
 #include "boostxl_periph.h"
+#include "sensors/voltage.h"
+#include "sensors/current.h"
 
 //-----------------------------------------------------------------------------
 // Global variables (watch in CCS Expressions)
 //-----------------------------------------------------------------------------
-volatile uint16_t adcResults[4]   = {0};  // [0]=Ia [1]=Ib [2]=Ic [3]=Vdc
-volatile uint32_t epwmIsrCount    = 0;    // INT3.4 current loop counter
-volatile uint16_t bissSpiRxData   = 0;    // Latest BiSS SPI result
-volatile uint32_t bissRxCount     = 0;    // INT6.1 BiSS RX counter
+volatile float    iAAmps          = 0.0f; // Calibrated phase A current (A)
+volatile float    iBAmps          = 0.0f; // Calibrated phase B current (A)
+volatile float    iCAmps          = 0.0f; // Calibrated phase C current (A)
+volatile float    vdcVolts        = 0.0f; // Calibrated DC bus voltage (V)
 volatile uint32_t timer0IsrCount  = 0;    // 2 kHz base rate counter
-volatile uint32_t canTxCount      = 0;
-volatile bool     canRxFlag       = false;
-volatile uint16_t canRxData[4]    = {0};
-volatile uint32_t loopCount       = 0;
+
+static CurrentCalibration_t currentCal = {0};
 
 // Scope toggle pin
 #define TMR_ISR_TOGGLE_GPIO     15U       // J8-73: Timer0 base rate toggle
 #define TMR_ISR_TOGGLE_PIN_CFG  GPIO_15_GPIO15
+
+//-----------------------------------------------------------------------------
+// Append a signed float (2 decimal places) to buf at pos; returns new pos.
+//-----------------------------------------------------------------------------
+static uint16_t appendFloat(char *buf, uint16_t pos, float val)
+{
+    char     tmp[5];
+    uint16_t len = 0;
+    uint16_t intPart;
+    uint16_t fracPart;
+
+    if (val < 0.0f) { buf[pos++] = '-'; val = -val; }
+
+    intPart  = (uint16_t)val;
+    fracPart = (uint16_t)((val - (float)intPart) * 100.0f + 0.5f);
+    if (fracPart >= 100U) { intPart++; fracPart = 0U; }
+
+    do { tmp[len++] = (char)('0' + (intPart % 10U)); intPart /= 10U; } while (intPart);
+    while (len--) buf[pos++] = tmp[len];
+
+    buf[pos++] = '.';
+    buf[pos++] = (char)('0' + (fracPart / 10U));
+    buf[pos++] = (char)('0' + (fracPart % 10U));
+    return pos;
+}
+
+//-----------------------------------------------------------------------------
+// Format Ia, Ib, Ic (calibrated amps) + Vdc (volts) as "A.AA,B.BB,C.CC,D.DD\r\n"
+// without using printf/sprintf
+//-----------------------------------------------------------------------------
+static void sendSensorData(void)
+{
+    char     buf[48];
+    uint16_t pos = 0;
+
+    pos = appendFloat(buf, pos, iAAmps);  buf[pos++] = ',';
+    pos = appendFloat(buf, pos, iBAmps);  buf[pos++] = ',';
+    pos = appendFloat(buf, pos, iCAmps);  buf[pos++] = ',';
+    pos = appendFloat(buf, pos, vdcVolts);
+
+    buf[pos++] = '\r';
+    buf[pos++] = '\n';
+    buf[pos]   = '\0';
+    BOOSTXL_serialSendString(buf);
+}
 
 //-----------------------------------------------------------------------------
 // ISR prototypes
@@ -110,6 +151,14 @@ void main(void)
     //
     // Register ISRs — matching Simulink interrupt block configuration
     //
+    //
+    // Calibrate current sensors at zero current (inverter still disabled)
+    //
+    Current_runCalibration(&currentCal);
+
+    //
+    // Register ISRs — matching Simulink interrupt block configuration
+    //
     Interrupt_register(INT_SPIA_RX, &spiaRxISR);    // INT6.1 (CPU6, PIE1)
     Interrupt_register(INT_EPWM4, &epwm4ISR);       // INT3.4 (CPU3, PIE4)
     Interrupt_register(INT_TIMER0, &timer0ISR);
@@ -124,35 +173,47 @@ void main(void)
     BOOSTXL_disableInverter();
 
     //
-    // Main loop (background) — CAN, nEN toggle, LEDs, faults
+    // Main loop (background) — serial TX as fast as possible, LED/CAN at 1 Hz
     //
+    // LED and inverter toggle every 500 ms — gated by timer0IsrCount
+    // (Timer0 @ 2 kHz, so 1000 ticks = 500 ms)
+    //
+    uint32_t lastToggleTick = 0;
+    bool     invEnabled     = false;
+
     while(1)
     {
-        GPIO_togglePin(DEVICE_GPIO_PIN_LED1);
-        BOOSTXL_enableInverter();
-        DEVICE_DELAY_US(500000);
+        // Serial — send calibrated sensor data as CSV at full loop rate
+        sendSensorData();
 
-        GPIO_togglePin(DEVICE_GPIO_PIN_LED2);
-        BOOSTXL_disableInverter();
-
-        // CAN TX: send ADC results
+        // LED flash + inverter toggle + CAN TX every 500 ms
+        if ((timer0IsrCount - lastToggleTick) >= 1000U)
         {
-            uint16_t canTxBuf[4];
-            canTxBuf[0] = adcResults[0];
-            canTxBuf[1] = adcResults[1];
-            canTxBuf[2] = adcResults[2];
-            canTxBuf[3] = adcResults[3];
-            BOOSTXL_canSend(8U, canTxBuf);
-            canTxCount++;
+            lastToggleTick = timer0IsrCount;
+
+            if (invEnabled)
+            {
+                GPIO_togglePin(DEVICE_GPIO_PIN_LED2);
+                BOOSTXL_disableInverter();
+                invEnabled = false;
+            }
+            else
+            {
+                GPIO_togglePin(DEVICE_GPIO_PIN_LED1);
+                BOOSTXL_enableInverter();
+                invEnabled = true;
+            }
+
+            // CAN TX: send raw phase current counts
+            {
+                uint16_t canTxBuf[4];
+                canTxBuf[0] = Current_getRawA();
+                canTxBuf[1] = 0U;
+                canTxBuf[2] = Current_getRawC();
+                canTxBuf[3] = 0U;
+                BOOSTXL_canSend(8U, canTxBuf);
+            }
         }
-
-        // CAN RX polling
-        canRxFlag = BOOSTXL_canRead((uint16_t*)canRxData);
-
-        // Serial — send Hello World once per loop iteration (~1 Hz)
-        BOOSTXL_serialSendString("Hello World\r\n");
-
-        loopCount++;
     }
 }
 
@@ -162,9 +223,7 @@ void main(void)
 //-----------------------------------------------------------------------------
 __interrupt void spiaRxISR(void)
 {
-    bissSpiRxData = SPI_readDataNonBlocking(BISS_SPI_BASE);
-
-    bissRxCount++;
+    (void)SPI_readDataNonBlocking(BISS_SPI_BASE);   // drain RX FIFO
 
     SPI_clearInterruptStatus(BISS_SPI_BASE, SPI_INT_RXFF);
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP6);
@@ -176,11 +235,11 @@ __interrupt void spiaRxISR(void)
 //-----------------------------------------------------------------------------
 __interrupt void epwm4ISR(void)
 {
-    // Read ADC results (conversions already complete from EPWM4 SOCA)
-    adcResults[0] = BOOSTXL_readPhaseACurrent();
-    adcResults[1] = BOOSTXL_readPhaseBCurrent();
-    adcResults[2] = BOOSTXL_readPhaseCCurrent();
-    adcResults[3] = BOOSTXL_readDCBusVoltage();
+    // Read calibrated sensor values (conversions complete from EPWM4 SOCA)
+    iAAmps   = Current_getPhaseA(&currentCal);
+    iCAmps   = Current_getPhaseC(&currentCal);
+    iBAmps   = Current_getPhaseB(iAAmps, iCAmps);
+    vdcVolts = Voltage_getDCBus();
 
     //
     // ---- Current controller would go here ----
@@ -190,8 +249,6 @@ __interrupt void epwm4ISR(void)
 
     // Kick off BiSS SPI transfer (non-blocking write, SPIA RX ISR reads result)
     SPI_writeDataNonBlocking(BISS_SPI_BASE, 0xFFFF);
-
-    epwmIsrCount++;
 
     EPWM_clearEventTriggerInterruptFlag(PHASE_A_PWM_BASE);
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP3);
@@ -215,4 +272,3 @@ __interrupt void timer0ISR(void)
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
 }
-

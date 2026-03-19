@@ -13,8 +13,8 @@
 #define VOLTAGE_ADC_VREF_V          3.0f
 #define VOLTAGE_ADC_COUNTS_MAX      4096.0f
 
-#define VOLTAGE_VBUS_R_TOP_OHM      100000.0f   // placeholder — update for your board
-#define VOLTAGE_VBUS_R_BOT_OHM      3300.0f     // placeholder — update for your board
+#define VOLTAGE_VBUS_R_TOP_OHM      100000.0f   // R66 on BOOSTXL-3PhGaNInv
+#define VOLTAGE_VBUS_R_BOT_OHM      4220.0f     // R67 on BOOSTXL-3PhGaNInv
 
 #define VOLTAGE_VBUS_FULL_SCALE_V   (VOLTAGE_ADC_VREF_V * \
                                      (VOLTAGE_VBUS_R_TOP_OHM + VOLTAGE_VBUS_R_BOT_OHM) \

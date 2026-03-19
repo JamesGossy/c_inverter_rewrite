@@ -117,10 +117,10 @@ void BOOSTXL_initADC(void)
     DEVICE_DELAY_US(1000);
 
     // ADCC
-    ADC_setPrescaler(IB_ADC_BASE, ADC_CLK_DIV_4_0);
-    ADC_setMode(IB_ADC_BASE, ADC_RESOLUTION_12BIT, ADC_MODE_SINGLE_ENDED);
-    ADC_setInterruptPulseMode(IB_ADC_BASE, ADC_PULSE_END_OF_CONV);
-    ADC_enableConverter(IB_ADC_BASE);
+    ADC_setPrescaler(IC_ADC_BASE, ADC_CLK_DIV_4_0);
+    ADC_setMode(IC_ADC_BASE, ADC_RESOLUTION_12BIT, ADC_MODE_SINGLE_ENDED);
+    ADC_setInterruptPulseMode(IC_ADC_BASE, ADC_PULSE_END_OF_CONV);
+    ADC_enableConverter(IC_ADC_BASE);
     DEVICE_DELAY_US(1000);
 
     // ADCD
@@ -132,7 +132,6 @@ void BOOSTXL_initADC(void)
 
     // SOCs triggered by EPWM4 SOCA (20 kHz)
     ADC_setupSOC(IA_ADC_BASE, IA_ADC_SOC, ADC_TRIGGER_SOURCE, IA_ADC_CHANNEL, ADC_SAMPLE_WINDOW);
-    ADC_setupSOC(IB_ADC_BASE, IB_ADC_SOC, ADC_TRIGGER_SOURCE, IB_ADC_CHANNEL, ADC_SAMPLE_WINDOW);
     ADC_setupSOC(IC_ADC_BASE, IC_ADC_SOC, ADC_TRIGGER_SOURCE, IC_ADC_CHANNEL, ADC_SAMPLE_WINDOW);
     ADC_setupSOC(VDC_ADC_BASE, VDC_ADC_SOC, ADC_TRIGGER_SOURCE, VDC_ADC_CHANNEL, ADC_SAMPLE_WINDOW);
 }
@@ -208,8 +207,7 @@ void BOOSTXL_initSerial(void)
     GPIO_setQualificationMode(SERIAL_RX_GPIO, GPIO_QUAL_ASYNC);
 
     SCI_performSoftwareReset(SERIAL_SCI_BASE);
-    SCI_setConfig(SERIAL_SCI_BASE, DEVICE_LSPCLK_FREQ, SERIAL_BAUD,
-                  (SCI_CONFIG_WLEN_8 | SCI_CONFIG_STOP_ONE | SCI_CONFIG_PAR_NONE));
+    SCI_setConfig(SERIAL_SCI_BASE, DEVICE_LSPCLK_FREQ, SERIAL_BAUD, (SCI_CONFIG_WLEN_8 | SCI_CONFIG_STOP_ONE | SCI_CONFIG_PAR_NONE));
     SCI_enableModule(SERIAL_SCI_BASE);
     SCI_enableTxModule(SERIAL_SCI_BASE);
     SCI_enableRxModule(SERIAL_SCI_BASE);
@@ -264,11 +262,6 @@ void BOOSTXL_setDuty(uint32_t pwmBase, float32_t duty)
 uint16_t BOOSTXL_readPhaseACurrent(void)
 {
     return ADC_readResult(IA_ADC_RESULT_BASE, IA_ADC_SOC);
-}
-
-uint16_t BOOSTXL_readPhaseBCurrent(void)
-{
-    return ADC_readResult(IB_ADC_RESULT_BASE, IB_ADC_SOC);
 }
 
 uint16_t BOOSTXL_readPhaseCCurrent(void)

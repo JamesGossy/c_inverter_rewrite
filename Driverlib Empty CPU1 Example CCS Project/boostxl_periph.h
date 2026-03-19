@@ -44,7 +44,7 @@
 // Phase C PWM_H    |   36   | J8-76         | GPIO10          | EPWM6A
 // Phase C PWM_L    |   35   | J8-75         | GPIO11          | EPWM6B
 // Phase A current  |   25   | J7-65         | ADCINB5         | ADCB ch5
-// Phase B current  |   27   | J7-67         | ADCINC4         | ADCC ch4
+// Phase B current  |   27   | J7-67         | ADCINC4         | (computed, not sampled)
 // Phase C current  |   24   | J7-64         | ADCINC5         | ADCC ch5
 // DC bus voltage   |   23   | J7-63         | ADCIN15         | ADCD ch15
 // Inverter nEN     |   13   | J6-53         | GPIO26          | GPIO out
@@ -98,22 +98,17 @@
 #define IA_ADC_CHANNEL          ADC_CH_ADCIN5
 #define IA_ADC_SOC              ADC_SOC_NUMBER0
 
-#define IB_ADC_BASE             ADCC_BASE
-#define IB_ADC_RESULT_BASE      ADCCRESULT_BASE
-#define IB_ADC_CHANNEL          ADC_CH_ADCIN4
-#define IB_ADC_SOC              ADC_SOC_NUMBER0
-
 #define IC_ADC_BASE             ADCC_BASE
 #define IC_ADC_RESULT_BASE      ADCCRESULT_BASE
 #define IC_ADC_CHANNEL          ADC_CH_ADCIN5
-#define IC_ADC_SOC              ADC_SOC_NUMBER1
+#define IC_ADC_SOC              ADC_SOC_NUMBER0
 
 #define VDC_ADC_BASE            ADCD_BASE
 #define VDC_ADC_RESULT_BASE     ADCDRESULT_BASE
-#define VDC_ADC_CHANNEL         ADC_CH_ADCIN14
+#define VDC_ADC_CHANNEL         ADC_CH_ADCIN15
 #define VDC_ADC_SOC             ADC_SOC_NUMBER0
 
-#define ADC_SAMPLE_WINDOW       20U
+#define ADC_SAMPLE_WINDOW       64U
 #define ADC_TRIGGER_SOURCE      ADC_TRIGGER_EPWM4_SOCA
 
 //-----------------------------------------------------------------------------
@@ -155,7 +150,7 @@
 #define SERIAL_RX_GPIO          43U
 #define SERIAL_TX_PIN_CFG       GPIO_42_SCITXDA
 #define SERIAL_RX_PIN_CFG       GPIO_43_SCIRXDA
-#define SERIAL_BAUD             115200U
+#define SERIAL_BAUD             3000000U
 
 //-----------------------------------------------------------------------------
 // CANA — CAN Bus (on-board transceiver, J12)
@@ -192,7 +187,6 @@ void BOOSTXL_disableInverter(void);
 void BOOSTXL_setDuty(uint32_t pwmBase, float32_t duty);
 
 uint16_t BOOSTXL_readPhaseACurrent(void);
-uint16_t BOOSTXL_readPhaseBCurrent(void);
 uint16_t BOOSTXL_readPhaseCCurrent(void);
 uint16_t BOOSTXL_readDCBusVoltage(void);
 
