@@ -1,8 +1,7 @@
 #ifndef SENSORS_VOLTAGE_H
 #define SENSORS_VOLTAGE_H
 
-#include <stdint.h>
-#include "hw/adc.h"
+#include "boostxl_periph.h"
 
 //-----------------------------------------------------------------------------
 // DC bus voltage scaling

@@ -1,9 +1,7 @@
 #ifndef SENSORS_CURRENT_H
 #define SENSORS_CURRENT_H
 
-#include <stdint.h>
-#include "hw/adc.h"
-#include "device.h"
+#include "boostxl_periph.h"
 
 //-----------------------------------------------------------------------------
 // Current sensor calibration
