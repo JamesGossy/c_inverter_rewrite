@@ -77,8 +77,9 @@ static uint16_t appendFloat(char *buf, uint16_t pos, float val)
     if (fracPart >= 100U) { intPart++; fracPart = 0U; }
 
     do { tmp[len++] = (char)('0' + (intPart % 10U)); intPart /= 10U; } while (intPart);
-    while (len--) buf[pos++] = tmp[len];
-
+    uint16_t i = len;
+    while (i--) buf[pos++] = tmp[i];
+    
     buf[pos++] = '.';
     buf[pos++] = (char)('0' + (fracPart / 10U));
     buf[pos++] = (char)('0' + (fracPart % 10U));
@@ -133,6 +134,14 @@ static void handleCommand(const char *line)
     float vq   = parseFloat(&p); if (*p == ',') p++;
     float freq = parseFloat(&p); if (*p == ',') p++;
     float en   = parseFloat(&p);
+
+    // Clamp to safe ranges
+    if (vd   >  20.0f) vd   =  20.0f;
+    if (vd   < -20.0f) vd   = -20.0f;
+    if (vq   >  20.0f) vq   =  20.0f;
+    if (vq   < -20.0f) vq   = -20.0f;
+    if (freq >  200.0f) freq = 200.0f;
+    if (freq <    0.0f) freq =   0.0f;
 
     openLoop_Vd     = vd;
     openLoop_Vq     = vq;
