@@ -10,14 +10,21 @@ GEN_OPTS__FLAG := --cmd_file="syscfg/board.opt" --cmd_file="syscfg/c2000ware_lib
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
-"./biss_api.obj" \
 "./boostxl_periph.obj" \
 "./syscfg/board.obj" \
 "./syscfg/c2000ware_libraries.obj" \
-"./data_ingester.obj" \
+"./open_loop_test.obj" \
 "./peripheral_test.obj" \
+"./comms/biss_api.obj" \
+"./comms/data_ingester.obj" \
+"./control/angle_ramp.obj" \
+"./control/pi.obj" \
+"./control/svpwm.obj" \
+"./control/transforms.obj" \
 "./device/F2837xD_CodeStartBranch.obj" \
 "./device/device.obj" \
+"./sensors/current.obj" \
+"./sensors/voltage.obj" \
 "../2837xD_RAM_lnk_cpu1.cmd" \
 "C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib" \
 $(GEN_CMDS__FLAG) \
@@ -31,9 +38,15 @@ RMDIR := RMDIR /S/Q
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include subdir_vars.mk
+-include comms/subdir_vars.mk
+-include control/subdir_vars.mk
 -include device/subdir_vars.mk
+-include sensors/subdir_vars.mk
 -include subdir_rules.mk
+-include comms/subdir_rules.mk
+-include control/subdir_rules.mk
 -include device/subdir_rules.mk
+-include sensors/subdir_rules.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -138,15 +151,15 @@ all: $(OBJS) $(CMD_SRCS) $(LIB_SRCS) $(GEN_CMDS)
 Driverlib\ Empty\ CPU1\ Example\ CCS\ Project.out: $(OBJS) $(CMD_SRCS) $(LIB_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: C2000 Linker'
-	"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 -Ooff --define=DEBUG --define=CPU1 --diag_suppress=10063 --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"Driverlib Empty CPU1 Example CCS Project.map" --stack_size=0x100 --warn_sections -i"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/lib" -i"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/include" --reread_libs --diag_wrap=off --display_error_number --xml_link_info="Driverlib Empty CPU1 Example CCS Project_linkInfo.xml" --entry_point=code_start --rom_model -o "Driverlib Empty CPU1 Example CCS Project.out" $(ORDERED_OBJS)
+	"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 -Ooff --define=DEBUG --define=CPU1 --define=_LAUNCHXL_F28379D --diag_suppress=10063 --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"Driverlib Empty CPU1 Example CCS Project.map" --stack_size=0x100 --warn_sections -i"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/lib" -i"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/include" --reread_libs --diag_wrap=off --display_error_number --xml_link_info="Driverlib Empty CPU1 Example CCS Project_linkInfo.xml" --entry_point=code_start --rom_model -o "Driverlib Empty CPU1 Example CCS Project.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(GEN_MISC_FILES__QUOTED)$(GEN_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "biss_api.obj" "boostxl_periph.obj" "syscfg\board.obj" "syscfg\c2000ware_libraries.obj" "data_ingester.obj" "peripheral_test.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" 
-	-$(RM) "biss_api.d" "boostxl_periph.d" "syscfg\board.d" "syscfg\c2000ware_libraries.d" "data_ingester.d" "peripheral_test.d" "device\device.d" 
+	-$(RM) "boostxl_periph.obj" "syscfg\board.obj" "syscfg\c2000ware_libraries.obj" "open_loop_test.obj" "peripheral_test.obj" "comms\biss_api.obj" "comms\data_ingester.obj" "control\angle_ramp.obj" "control\pi.obj" "control\svpwm.obj" "control\transforms.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" "sensors\current.obj" "sensors\voltage.obj" 
+	-$(RM) "boostxl_periph.d" "syscfg\board.d" "syscfg\c2000ware_libraries.d" "open_loop_test.d" "peripheral_test.d" "comms\biss_api.d" "comms\data_ingester.d" "control\angle_ramp.d" "control\pi.d" "control\svpwm.d" "control\transforms.d" "device\device.d" "sensors\current.d" "sensors\voltage.d" 
 	-$(RM) "device\F2837xD_CodeStartBranch.d" 
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
 	-@echo 'Finished clean'

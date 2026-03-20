@@ -11,7 +11,7 @@
 //   Example: ±50 A range → gain = 100 / 4096 = 0.02441 A/count
 //-----------------------------------------------------------------------------
 #define CURRENT_CAL_SAMPLES         1000U
-#define CURRENT_GAIN_A_PER_COUNT    0.02441f    // placeholder — update for your board
+#define CURRENT_GAIN_A_PER_COUNT    0.0008057f    
 
 typedef struct {
     float offsetA;   // zero-current ADC count, phase A

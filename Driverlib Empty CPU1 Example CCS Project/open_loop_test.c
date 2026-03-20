@@ -36,9 +36,9 @@
 //-----------------------------------------------------------------------------
 // Control knobs — set from serial (vd,vq,freq,enable\r\n) or CCS Expressions
 //-----------------------------------------------------------------------------
-volatile float    openLoop_freqHz  = 5.0f;   // Electrical frequency (Hz)
+volatile float    openLoop_freqHz  = 0.0f;   // Electrical frequency (Hz)
 volatile float    openLoop_Vd      = 0.0f;   // Injected Vd (V) — normally 0
-volatile float    openLoop_Vq      = 3.0f;   // Injected Vq (V)
+volatile float    openLoop_Vq      = 0.0f;   // Injected Vq (V)
 volatile uint16_t openLoop_enable  = 0U;     // 1 = spin, 0 = coast
 
 //-----------------------------------------------------------------------------
@@ -234,7 +234,8 @@ void main(void)
     //
     // Main loop — update ramp frequency from live variable, manage enable
     //
-    uint32_t lastTick = 0U;
+    uint32_t lastTick     = 0U;
+    uint32_t lastTeleTick = 0U;
 
     while(1)
     {
@@ -250,8 +251,12 @@ void main(void)
         else
             BOOSTXL_disableInverter();
 
-        // Send telemetry (Ia,Ib,Ic,Vdc,theta\r\n)
-        sendTelemetry();
+        // Send telemetry at ~20 Hz (every 100 ms = 200 timer ticks at 2 kHz)
+        if ((timer0IsrCount - lastTeleTick) >= 20U)
+        {
+            lastTeleTick = timer0IsrCount;
+            sendTelemetry();
+        }
 
         // LED heartbeat every 500 ms
         if ((timer0IsrCount - lastTick) >= 1000U)

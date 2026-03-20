@@ -2,7 +2,7 @@
 
 syscfg/board.obj: syscfg/board.c
 syscfg/board.obj: syscfg/board.h
-syscfg/board.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_foc/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h
+syscfg/board.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h
 syscfg/board.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/inc/hw_memmap.h
 syscfg/board.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/adc.h
 syscfg/board.obj: C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/include/stdbool.h
@@ -88,13 +88,13 @@ syscfg/board.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/upp.h
 syscfg/board.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/inc/hw_upp.h
 syscfg/board.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/version.h
 syscfg/board.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/driver_inclusive_terminology_mapping.h
-syscfg/board.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_foc/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h
+syscfg/board.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h
 
 syscfg/board.c:
 
 syscfg/board.h:
 
-C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_foc/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h:
+C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h:
 
 C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/inc/hw_memmap.h:
 
@@ -266,5 +266,5 @@ C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/version.h:
 
 C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/driver_inclusive_terminology_mapping.h:
 
-C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_foc/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h:
+C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h:
 

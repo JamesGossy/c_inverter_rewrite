@@ -3,7 +3,7 @@
 syscfg/c2000ware_libraries.obj: syscfg/c2000ware_libraries.c
 syscfg/c2000ware_libraries.obj: syscfg/c2000ware_libraries.h
 syscfg/c2000ware_libraries.obj: syscfg/board.h
-syscfg/c2000ware_libraries.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_foc/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h
+syscfg/c2000ware_libraries.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h
 syscfg/c2000ware_libraries.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/inc/hw_memmap.h
 syscfg/c2000ware_libraries.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/adc.h
 syscfg/c2000ware_libraries.obj: C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/include/stdbool.h
@@ -89,7 +89,7 @@ syscfg/c2000ware_libraries.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/dri
 syscfg/c2000ware_libraries.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/inc/hw_upp.h
 syscfg/c2000ware_libraries.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/version.h
 syscfg/c2000ware_libraries.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/driver_inclusive_terminology_mapping.h
-syscfg/c2000ware_libraries.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_foc/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h
+syscfg/c2000ware_libraries.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h
 
 syscfg/c2000ware_libraries.c:
 
@@ -97,7 +97,7 @@ syscfg/c2000ware_libraries.h:
 
 syscfg/board.h:
 
-C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_foc/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h:
+C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h:
 
 C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/inc/hw_memmap.h:
 
@@ -269,5 +269,5 @@ C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/version.h:
 
 C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/driver_inclusive_terminology_mapping.h:
 
-C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_foc/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h:
+C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h:
 
