@@ -87,8 +87,8 @@
 #define PWM_TBPRD               2500U
 
 // Dead band: 10 counts * 10 ns = 100 ns
-#define PWM_DEADBAND_RED_COUNT  10U
-#define PWM_DEADBAND_FED_COUNT  10U
+#define PWM_DEADBAND_RED_COUNT  100U
+#define PWM_DEADBAND_FED_COUNT  100U
 
 //-----------------------------------------------------------------------------
 // ADC Configuration

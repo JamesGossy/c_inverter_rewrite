@@ -251,8 +251,8 @@ void main(void)
         else
             BOOSTXL_disableInverter();
 
-        // Send telemetry at ~20 Hz (every 100 ms = 200 timer ticks at 2 kHz)
-        if ((timer0IsrCount - lastTeleTick) >= 20U)
+        // Send telemetry at ~1 kHz (every 2 timer ticks at 2 kHz)
+        if ((timer0IsrCount - lastTeleTick) >= 2U)
         {
             lastTeleTick = timer0IsrCount;
             sendTelemetry();

@@ -66,8 +66,9 @@ static void initEPWMModule(uint32_t base, bool isMaster)
     EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, PWM_TBPRD / 2);
     EPWM_setCounterCompareShadowLoadMode(base, EPWM_COUNTER_COMPARE_A, EPWM_COMP_LOAD_ON_CNTR_ZERO);
 
-    EPWM_setActionQualifierAction(base, EPWM_AQ_OUTPUT_A, EPWM_AQ_OUTPUT_HIGH, EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
-    EPWM_setActionQualifierAction(base, EPWM_AQ_OUTPUT_A, EPWM_AQ_OUTPUT_LOW, EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
+    EPWM_setActionQualifierAction(base, EPWM_AQ_OUTPUT_A, EPWM_AQ_OUTPUT_LOW,  EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
+    EPWM_setActionQualifierAction(base, EPWM_AQ_OUTPUT_A, EPWM_AQ_OUTPUT_HIGH, EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
+
 
     // Dead band: AHC mode
     EPWM_setRisingEdgeDeadBandDelayInput(base, EPWM_DB_INPUT_EPWMA);
@@ -97,7 +98,7 @@ void BOOSTXL_initPWM(void)
 
     // EPWM4 interrupt at counter zero (20 kHz) — triggers current controller ISR
     // This is INT3.4 (INT_EPWM4), matching the big inverter Simulink model
-    EPWM_setInterruptSource(PHASE_A_PWM_BASE, EPWM_INT_TBCTR_ZERO);
+    EPWM_setInterruptSource(PHASE_A_PWM_BASE, EPWM_INT_TBCTR_PERIOD);
     EPWM_setInterruptEventCount(PHASE_A_PWM_BASE, 1U);
     EPWM_enableInterrupt(PHASE_A_PWM_BASE);
 

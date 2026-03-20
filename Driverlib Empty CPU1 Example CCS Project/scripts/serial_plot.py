@@ -9,7 +9,8 @@ Usage:
     python serial_plot.py --port COM5 --baud 115200
 """
 
-import sys, argparse, collections, threading, time
+import sys, argparse, collections, threading, time, csv, os
+from datetime import datetime
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
@@ -19,7 +20,7 @@ parser.add_argument("--port", default="COM12")
 parser.add_argument("--baud", type=int, default=3_000_000)
 args = parser.parse_args()
 
-MAX_SAMPLES = 5000
+MAX_SAMPLES = 10000
 
 ia    = collections.deque([0.0]  * MAX_SAMPLES, maxlen=MAX_SAMPLES)
 ib    = collections.deque([0.0]  * MAX_SAMPLES, maxlen=MAX_SAMPLES)
@@ -31,6 +32,31 @@ data_lock = threading.Lock()
 cmd = {"vd": 0.0, "vq": 0.0, "freq": 0.0, "enable": False}
 cmd_lock = threading.Lock()
 ser = None
+
+# --- CSV logging ---
+log_state = {"active": False, "file": None, "writer": None}
+log_lock = threading.Lock()
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+
+def start_log():
+    os.makedirs(LOG_DIR, exist_ok=True)
+    fname = os.path.join(LOG_DIR, datetime.now().strftime("log_%Y%m%d_%H%M%S.csv"))
+    f = open(fname, "w", newline="")
+    w = csv.writer(f)
+    w.writerow(["timestamp_s", "Ia", "Ib", "Ic", "Vdc", "theta"])
+    with log_lock:
+        log_state["active"] = True
+        log_state["file"] = f
+        log_state["writer"] = w
+    return fname
+
+def stop_log():
+    with log_lock:
+        log_state["active"] = False
+        if log_state["file"]:
+            log_state["file"].close()
+        log_state["file"] = None
+        log_state["writer"] = None
 
 def send_command():
     if ser is None: return
@@ -51,10 +77,15 @@ def serial_thread():
             parts = line.decode("ascii", errors="replace").strip().split(",")
             if len(parts) == 5:
                 try:
+                    vals = [float(p) for p in parts]
                     with data_lock:
-                        ia.append(float(parts[0])); ib.append(float(parts[1]))
-                        ic.append(float(parts[2])); vdc.append(float(parts[3]))
-                        theta.append(float(parts[4]))
+                        ia.append(vals[0]); ib.append(vals[1])
+                        ic.append(vals[2]); vdc.append(vals[3])
+                        theta.append(vals[4])
+                    with log_lock:
+                        if log_state["active"] and log_state["writer"]:
+                            log_state["writer"].writerow(
+                                [f"{time.time():.6f}"] + [f"{v:.6f}" for v in vals])
                 except ValueError: pass
         time.sleep(0.001)
 
@@ -190,7 +221,19 @@ btn_en.setStyleSheet("QPushButton{background:#ccc;color:#555;border:none;border-
                      "QPushButton:checked{background:#2dc653;color:#fff;}"
                      "QPushButton:hover{border:1px solid #aaa;}")
 
-cmd_row.addWidget(btn_apply); cmd_row.addWidget(btn_en); cmd_row.addStretch()
+btn_log = QtWidgets.QPushButton("LOG")
+btn_log.setCheckable(True); btn_log.setFixedSize(60, 26); btn_log.setFont(BOLD)
+btn_log.setStyleSheet("QPushButton{background:#ccc;color:#555;border:none;border-radius:4px;}"
+                      "QPushButton:checked{background:#e63946;color:#fff;}"
+                      "QPushButton:hover{border:1px solid #aaa;}")
+
+log_status = QtWidgets.QLabel(""); log_status.setFont(MONO)
+log_status.setStyleSheet("color:#888; font-size:8pt;")
+
+cmd_row.addWidget(btn_apply); cmd_row.addWidget(btn_en)
+cmd_row.addSpacing(12)
+cmd_row.addWidget(btn_log); cmd_row.addWidget(log_status)
+cmd_row.addStretch()
 root.addWidget(cmd_frame)
 
 def on_apply():
@@ -206,8 +249,17 @@ def on_enable(checked):
     with cmd_lock: cmd["enable"] = checked
     send_command()
 
+def on_log(checked):
+    if checked:
+        fname = start_log()
+        log_status.setText(os.path.basename(fname))
+    else:
+        stop_log()
+        log_status.setText("")
+
 btn_apply.clicked.connect(on_apply)
 btn_en.toggled.connect(on_enable)
+btn_log.toggled.connect(on_log)
 for ed in [ed_vd, ed_vq, ed_freq]: ed.returnPressed.connect(on_apply)
 
 def autoscale(plot, arrays, pad_abs=0.5):

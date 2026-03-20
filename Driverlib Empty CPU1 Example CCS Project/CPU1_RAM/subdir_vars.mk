@@ -5,6 +5,9 @@
 SHELL = cmd.exe
 
 # Add inputs and outputs from these tool invocations to the build variables 
+EXE_SRCS += \
+../sim_open_loop.exe 
+
 CMD_SRCS += \
 ../2837xD_RAM_lnk_cpu1.cmd 
 
@@ -97,5 +100,8 @@ C_SRCS__QUOTED += \
 
 SYSCFG_SRCS__QUOTED += \
 "../c2000.syscfg" 
+
+EXE_SRCS__QUOTED += \
+"../sim_open_loop.exe" 
 
 
