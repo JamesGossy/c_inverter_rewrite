@@ -238,11 +238,15 @@ root.addWidget(cmd_frame)
 
 def on_apply():
     try:
-        with cmd_lock:
-            cmd["vd"] = float(ed_vd.text())
-            cmd["vq"] = float(ed_vq.text())
-            cmd["freq"] = float(ed_freq.text())
-    except ValueError: pass
+        vd   = float(ed_vd.text())
+        vq   = float(ed_vq.text())
+        freq = float(ed_freq.text())
+    except ValueError:
+        return  # don't send if any field can't be parsed
+    with cmd_lock:
+        cmd["vd"]   = vd
+        cmd["vq"]   = vq
+        cmd["freq"] = freq
     send_command()
 
 def on_enable(checked):

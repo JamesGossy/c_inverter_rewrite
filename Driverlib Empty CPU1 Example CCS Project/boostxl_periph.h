@@ -43,12 +43,12 @@
 // Phase B PWM_L    |   37   | J8-77         | GPIO9           | EPWM5B
 // Phase C PWM_H    |   36   | J8-76         | GPIO10          | EPWM6A
 // Phase C PWM_L    |   35   | J8-75         | GPIO11          | EPWM6B
-// Phase A current  |   25   | J7-65         | ADCINB5         | ADCB ch5
-// Phase B current  |   27   | J7-67         | ADCINC4         | (computed, not sampled)
-// Phase C current  |   24   | J7-64         | ADCINC5         | ADCC ch5
+// Phase A current  |   25   | J7-65         | ADCINB4         | (computed, not sampled)
+// Phase B current  |   27   | J7-67         | ADCINB4         | ADCB ch4
+// Phase C current  |   24   | J7-64         | ADCINC4         | ADCC ch4
 // DC bus voltage   |   23   | J7-63         | ADCIN15         | ADCD ch15
 // Inverter nEN     |   13   | J6-53         | GPIO26          | GPIO out
-//
+// 
 // --- Site 1 (J1-J4): BiSS-C Decoder Board ---
 // SPI SIMO (BiSS)  |   15   | J2-15         | GPIO58          | SPISIMOA
 // SPI SOMI (BiSS)  |   14   | J2-14         | GPIO59          | SPISOMIA
@@ -93,22 +93,22 @@
 //-----------------------------------------------------------------------------
 // ADC Configuration
 //-----------------------------------------------------------------------------
-#define IA_ADC_BASE             ADCB_BASE
-#define IA_ADC_RESULT_BASE      ADCBRESULT_BASE
-#define IA_ADC_CHANNEL          ADC_CH_ADCIN5
-#define IA_ADC_SOC              ADC_SOC_NUMBER0
+#define IB_ADC_BASE             ADCB_BASE
+#define IB_ADC_RESULT_BASE      ADCBRESULT_BASE
+#define IB_ADC_CHANNEL          ADC_CH_ADCIN4
+#define IB_ADC_SOC              ADC_SOC_NUMBER0
 
 #define IC_ADC_BASE             ADCC_BASE
 #define IC_ADC_RESULT_BASE      ADCCRESULT_BASE
-#define IC_ADC_CHANNEL          ADC_CH_ADCIN5
-#define IC_ADC_SOC              ADC_SOC_NUMBER0
+#define IC_ADC_CHANNEL          ADC_CH_ADCIN4
+#define IC_ADC_SOC              ADC_SOC_NUMBER1
 
 #define VDC_ADC_BASE            ADCD_BASE
 #define VDC_ADC_RESULT_BASE     ADCDRESULT_BASE
 #define VDC_ADC_CHANNEL         ADC_CH_ADCIN15
 #define VDC_ADC_SOC             ADC_SOC_NUMBER0
 
-#define ADC_SAMPLE_WINDOW       64U
+#define ADC_SAMPLE_WINDOW       15U
 #define ADC_TRIGGER_SOURCE      ADC_TRIGGER_EPWM4_SOCA
 
 //-----------------------------------------------------------------------------
@@ -186,7 +186,7 @@ void BOOSTXL_enableInverter(void);
 void BOOSTXL_disableInverter(void);
 void BOOSTXL_setDuty(uint32_t pwmBase, float32_t duty);
 
-uint16_t BOOSTXL_readPhaseACurrent(void);
+uint16_t BOOSTXL_readPhaseBCurrent(void);
 uint16_t BOOSTXL_readPhaseCCurrent(void);
 uint16_t BOOSTXL_readDCBusVoltage(void);
 
@@ -199,4 +199,3 @@ void BOOSTXL_initSerial(void);
 void BOOSTXL_serialSendString(const char *str);
 
 #endif // BOOSTXL_3PHGANINV_PERIPH_H
-

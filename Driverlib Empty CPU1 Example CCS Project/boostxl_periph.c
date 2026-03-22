@@ -111,10 +111,10 @@ void BOOSTXL_initPWM(void)
 void BOOSTXL_initADC(void)
 {
     // ADCB
-    ADC_setPrescaler(IA_ADC_BASE, ADC_CLK_DIV_4_0);
-    ADC_setMode(IA_ADC_BASE, ADC_RESOLUTION_12BIT, ADC_MODE_SINGLE_ENDED);
-    ADC_setInterruptPulseMode(IA_ADC_BASE, ADC_PULSE_END_OF_CONV);
-    ADC_enableConverter(IA_ADC_BASE);
+    ADC_setPrescaler(IB_ADC_BASE, ADC_CLK_DIV_4_0);
+    ADC_setMode(IB_ADC_BASE, ADC_RESOLUTION_12BIT, ADC_MODE_SINGLE_ENDED);
+    ADC_setInterruptPulseMode(IB_ADC_BASE, ADC_PULSE_END_OF_CONV);
+    ADC_enableConverter(IB_ADC_BASE);
     DEVICE_DELAY_US(1000);
 
     // ADCC
@@ -132,7 +132,7 @@ void BOOSTXL_initADC(void)
     DEVICE_DELAY_US(1000);
 
     // SOCs triggered by EPWM4 SOCA (20 kHz)
-    ADC_setupSOC(IA_ADC_BASE, IA_ADC_SOC, ADC_TRIGGER_SOURCE, IA_ADC_CHANNEL, ADC_SAMPLE_WINDOW);
+    ADC_setupSOC(IB_ADC_BASE, IB_ADC_SOC, ADC_TRIGGER_SOURCE, IB_ADC_CHANNEL, ADC_SAMPLE_WINDOW);
     ADC_setupSOC(IC_ADC_BASE, IC_ADC_SOC, ADC_TRIGGER_SOURCE, IC_ADC_CHANNEL, ADC_SAMPLE_WINDOW);
     ADC_setupSOC(VDC_ADC_BASE, VDC_ADC_SOC, ADC_TRIGGER_SOURCE, VDC_ADC_CHANNEL, ADC_SAMPLE_WINDOW);
 }
@@ -209,6 +209,12 @@ void BOOSTXL_initSerial(void)
 
     SCI_performSoftwareReset(SERIAL_SCI_BASE);
     SCI_setConfig(SERIAL_SCI_BASE, DEVICE_LSPCLK_FREQ, SERIAL_BAUD, (SCI_CONFIG_WLEN_8 | SCI_CONFIG_STOP_ONE | SCI_CONFIG_PAR_NONE));
+    // Enable 16-deep FIFOs so incoming bytes are buffered while the main loop
+    // is busy transmitting telemetry (blocking TX).  Without this, RX overruns
+    // drop bytes mid-frame and commands are parsed incorrectly.
+    SCI_enableFIFO(SERIAL_SCI_BASE);
+    SCI_resetRxFIFO(SERIAL_SCI_BASE);
+    SCI_resetTxFIFO(SERIAL_SCI_BASE);
     SCI_enableModule(SERIAL_SCI_BASE);
     SCI_enableTxModule(SERIAL_SCI_BASE);
     SCI_enableRxModule(SERIAL_SCI_BASE);
@@ -218,7 +224,7 @@ void BOOSTXL_serialSendString(const char *str)
 {
     while (*str)
     {
-        SCI_writeCharBlockingNonFIFO(SERIAL_SCI_BASE, (uint16_t)*str);
+        SCI_writeCharBlockingFIFO(SERIAL_SCI_BASE, (uint16_t)*str);
         str++;
     }
 }
@@ -260,9 +266,9 @@ void BOOSTXL_setDuty(uint32_t pwmBase, float32_t duty)
     EPWM_setCounterCompareValue(pwmBase, EPWM_COUNTER_COMPARE_A, cmpVal);
 }
 
-uint16_t BOOSTXL_readPhaseACurrent(void)
+uint16_t BOOSTXL_readPhaseBCurrent(void)
 {
-    return ADC_readResult(IA_ADC_RESULT_BASE, IA_ADC_SOC);
+    return ADC_readResult(IB_ADC_RESULT_BASE, IB_ADC_SOC);
 }
 
 uint16_t BOOSTXL_readPhaseCCurrent(void)

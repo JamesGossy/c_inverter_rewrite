@@ -151,7 +151,7 @@ static void handleCommand(const char *line)
 
 static void pollSerial(void)
 {
-    while (SCI_getRxStatus(SERIAL_SCI_BASE) & SCI_RXSTATUS_READY)
+    while (SCI_getRxFIFOStatus(SERIAL_SCI_BASE) != SCI_FIFO_RX0)
     {
         char c = (char)(SCI_readCharNonBlocking(SERIAL_SCI_BASE) & 0xFFU);
         if (c == '\n')
@@ -277,9 +277,9 @@ __interrupt void epwm4ISR(void)
     float dutyA, dutyB, dutyC;
 
     // Read sensors
-    iAAmps   = Current_getPhaseA(&currentCal);
+    iBAmps   = Current_getPhaseB(&currentCal);
     iCAmps   = Current_getPhaseC(&currentCal);
-    iBAmps   = Current_getPhaseB(iAAmps, iCAmps);
+    iAAmps   = Current_getPhaseA(iBAmps, iCAmps);
     vdcVolts = Voltage_getDCBus();
 
     // Advance angle
