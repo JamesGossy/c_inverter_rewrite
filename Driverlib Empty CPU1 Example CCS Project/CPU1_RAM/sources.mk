@@ -122,5 +122,6 @@ SUBDIRS := \
 comms \
 control \
 device \
+hal \
 sensors \
 

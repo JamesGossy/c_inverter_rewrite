@@ -1,6 +1,6 @@
 //#############################################################################
 //
-// FILE:   boostxl_3phganinv_periph.h
+// FILE:   hal_boostxl.h
 //
 // TITLE:  Peripheral setup for BOOSTXL-3PhGaNInv on LAUNCHXL-F28379D
 //
@@ -25,8 +25,8 @@
 //
 //#############################################################################
 
-#ifndef BOOSTXL_3PHGANINV_PERIPH_H
-#define BOOSTXL_3PHGANINV_PERIPH_H
+#ifndef HAL_BOOSTXL_H
+#define HAL_BOOSTXL_H
 
 #include "driverlib.h"
 #include "device.h"
@@ -37,18 +37,18 @@
 // --- Site 2 (J5-J8): BOOSTXL-3PhGaNInv ---
 // Function         | BP Pin | LP Header-Pin | GPIO/ADC        | Peripheral
 // -----------------+--------+---------------+-----------------+-------------
-// Phase A PWM_H    |   40   | J8-80         | GPIO6           | EPWM4A
-// Phase A PWM_L    |   39   | J8-79         | GPIO7           | EPWM4B
+// Phase C PWM_H    |   40   | J8-80         | GPIO6           | EPWM4A  ← master (SOCA, CMPC ISR)
+// Phase C PWM_L    |   39   | J8-79         | GPIO7           | EPWM4B
 // Phase B PWM_H    |   38   | J8-78         | GPIO8           | EPWM5A
 // Phase B PWM_L    |   37   | J8-77         | GPIO9           | EPWM5B
-// Phase C PWM_H    |   36   | J8-76         | GPIO10          | EPWM6A
-// Phase C PWM_L    |   35   | J8-75         | GPIO11          | EPWM6B
+// Phase A PWM_H    |   36   | J8-76         | GPIO10          | EPWM6A
+// Phase A PWM_L    |   35   | J8-75         | GPIO11          | EPWM6B
 // Phase A current  |   25   | J7-65         | ADCINB4         | (computed, not sampled)
 // Phase B current  |   27   | J7-67         | ADCINB4         | ADCB ch4
 // Phase C current  |   24   | J7-64         | ADCINC4         | ADCC ch4
 // DC bus voltage   |   23   | J7-63         | ADCIN15         | ADCD ch15
 // Inverter nEN     |   13   | J6-53         | GPIO26          | GPIO out
-// 
+//
 // --- Site 1 (J1-J4): BiSS-C Decoder Board ---
 // SPI SIMO (BiSS)  |   15   | J2-15         | GPIO58          | SPISIMOA
 // SPI SOMI (BiSS)  |   14   | J2-14         | GPIO59          | SPISOMIA
@@ -63,23 +63,26 @@
 //-----------------------------------------------------------------------------
 // PWM Configuration — 20 kHz switching
 //-----------------------------------------------------------------------------
-#define PHASE_A_PWM_BASE        EPWM4_BASE
+// Duty[0] (Phase A) → EPwm6 (GPIO10/11)
+// Duty[1] (Phase B) → EPwm5 (GPIO8/9)
+// Duty[2] (Phase C) → EPwm4 (GPIO6/7, master — owns SOCA and CMPC interrupt)
+#define PHASE_A_PWM_BASE        EPWM6_BASE
 #define PHASE_B_PWM_BASE        EPWM5_BASE
-#define PHASE_C_PWM_BASE        EPWM6_BASE
+#define PHASE_C_PWM_BASE        EPWM4_BASE
 
-#define PHASE_A_PWM_H_GPIO      6U
-#define PHASE_A_PWM_L_GPIO      7U
+#define PHASE_A_PWM_H_GPIO      10U
+#define PHASE_A_PWM_L_GPIO      11U
 #define PHASE_B_PWM_H_GPIO      8U
 #define PHASE_B_PWM_L_GPIO      9U
-#define PHASE_C_PWM_H_GPIO      10U
-#define PHASE_C_PWM_L_GPIO      11U
+#define PHASE_C_PWM_H_GPIO      6U
+#define PHASE_C_PWM_L_GPIO      7U
 
-#define PHASE_A_PWM_H_PIN_CFG   GPIO_6_EPWM4A
-#define PHASE_A_PWM_L_PIN_CFG   GPIO_7_EPWM4B
+#define PHASE_A_PWM_H_PIN_CFG   GPIO_10_EPWM6A
+#define PHASE_A_PWM_L_PIN_CFG   GPIO_11_EPWM6B
 #define PHASE_B_PWM_H_PIN_CFG   GPIO_8_EPWM5A
 #define PHASE_B_PWM_L_PIN_CFG   GPIO_9_EPWM5B
-#define PHASE_C_PWM_H_PIN_CFG   GPIO_10_EPWM6A
-#define PHASE_C_PWM_L_PIN_CFG   GPIO_11_EPWM6B
+#define PHASE_C_PWM_H_PIN_CFG   GPIO_6_EPWM4A
+#define PHASE_C_PWM_L_PIN_CFG   GPIO_7_EPWM4B
 
 // 20 kHz, up-down count, EPWMCLK = 100 MHz
 // TBPRD = 100e6 / (2 * 20e3) = 2500
@@ -125,21 +128,36 @@
 
 //-----------------------------------------------------------------------------
 // SPIA — BiSS-C Encoder on Site 1 (J1-J4)
+//
+// Architecture: MCU is SPI peripheral (slave); FPGA is the SPI master.
+//   FPGA drives SPICLK and asserts SPISTEA.
+//   GPIO123 rising edge tells the FPGA to latch the BiSS position; FPGA then
+//   autonomously clocks the 16-bit result back on MISO.
+//   MCU SPI RX FIFO interrupt (INT6.1) fires when the word arrives.
 //-----------------------------------------------------------------------------
 #define BISS_SPI_BASE           SPIA_BASE
 
-#define BISS_SIMO_GPIO          58U
-#define BISS_SOMI_GPIO          59U
-#define BISS_CLK_GPIO           60U
-#define BISS_STE_GPIO           61U
+#define BISS_SIMO_GPIO          58U     // MOSI (MCU→FPGA, unused in peripheral mode)
+#define BISS_SOMI_GPIO          59U     // MISO (FPGA→MCU, carries position data)
+#define BISS_CLK_GPIO           60U     // SPICLK  — driven by FPGA (master)
+#define BISS_STE_GPIO           61U     // SPISTEA — asserted by FPGA (master), active low
 
 #define BISS_SIMO_PIN_CFG       GPIO_58_SPISIMOA
 #define BISS_SOMI_PIN_CFG       GPIO_59_SPISOMIA
 #define BISS_CLK_PIN_CFG        GPIO_60_SPICLKA
 #define BISS_STE_PIN_CFG        GPIO_61_SPISTEA
 
+// Nominal SPI clock rate (don't-care in peripheral mode; kept for SPI_setConfig API).
 #define BISS_SPI_BITRATE        5000000U
 #define BISS_SPI_DATAWIDTH      16U
+
+// GPIO123 — "Sample Now" output to FPGA.
+// samplePositionNowISR writes this pin HIGH every cycle (matching the Simulink
+// reference model MiniGaN_SamplePositionNow).  The pin is never cleared — it
+// stays permanently HIGH after the first execution.  The FPGA latches the BiSS
+// position on the rising edge of the first cycle and thereafter on each high write.
+#define BISS_FPGA_SAMPLE_GPIO       123U
+#define BISS_FPGA_SAMPLE_PIN_CFG    GPIO_123_GPIO123
 
 //-----------------------------------------------------------------------------
 // SCIA — On-board USB-to-serial (virtual COM port, J1-3/J1-4)
@@ -190,7 +208,7 @@ uint16_t BOOSTXL_readPhaseBCurrent(void);
 uint16_t BOOSTXL_readPhaseCCurrent(void);
 uint16_t BOOSTXL_readDCBusVoltage(void);
 
-uint16_t BOOSTXL_bissSpiTransfer(uint16_t txData);
+// BOOSTXL_bissSpiTransfer() removed — SPI TX now handled inside samplePositionNowISR.
 
 void BOOSTXL_canSend(uint16_t msgLen, const uint16_t* msgData);
 bool BOOSTXL_canRead(uint16_t* msgData);
@@ -198,4 +216,4 @@ bool BOOSTXL_canRead(uint16_t* msgData);
 void BOOSTXL_initSerial(void);
 void BOOSTXL_serialSendString(const char *str);
 
-#endif // BOOSTXL_3PHGANINV_PERIPH_H
+#endif // HAL_BOOSTXL_H

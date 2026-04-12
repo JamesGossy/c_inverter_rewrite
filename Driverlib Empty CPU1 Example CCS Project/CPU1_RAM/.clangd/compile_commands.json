@@ -52,17 +52,22 @@
    {
       "directory" : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM",
       "command"   : "clang++ -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project\" -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/device\" -I\"C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/\" -I\"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/include\" -DDEBUG -DCPU1 -D_LAUNCHXL_F28379D -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM/syscfg\" -DF2837xD=1 -xc",
-      "file"      : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/boostxl_periph.c"
-   },
-   {
-      "directory" : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM",
-      "command"   : "clang++ -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project\" -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/device\" -I\"C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/\" -I\"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/include\" -DDEBUG -DCPU1 -D_LAUNCHXL_F28379D -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM/syscfg\" -DF2837xD=1 -xc",
       "file"      : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/control/angle_ramp.c"
    },
    {
       "directory" : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM",
       "command"   : "clang++ -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project\" -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/device\" -I\"C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/\" -I\"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/include\" -DDEBUG -DCPU1 -D_LAUNCHXL_F28379D -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM/syscfg\" -DF2837xD=1 -xc",
       "file"      : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/open_loop_test.c"
+   },
+   {
+      "directory" : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM",
+      "command"   : "clang++ -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project\" -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/device\" -I\"C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/\" -I\"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/include\" -DDEBUG -DCPU1 -D_LAUNCHXL_F28379D -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM/syscfg\" -DF2837xD=1 -xc",
+      "file"      : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/closed_loop_test.c"
+   },
+   {
+      "directory" : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM",
+      "command"   : "clang++ -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project\" -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/device\" -I\"C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/\" -I\"C:/ti/ccs2041/ccs/tools/compiler/ti-cgt-c2000_22.6.3.LTS/include\" -DDEBUG -DCPU1 -D_LAUNCHXL_F28379D -I\"C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM/syscfg\" -DF2837xD=1 -xc",
+      "file"      : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/hal/hal_boostxl.c"
    },
    {
       "directory" : "C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib Empty CPU1 Example CCS Project/CPU1_RAM",

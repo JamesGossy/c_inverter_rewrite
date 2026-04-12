@@ -10,9 +10,9 @@ GEN_OPTS__FLAG := --cmd_file="syscfg/board.opt" --cmd_file="syscfg/c2000ware_lib
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
-"./boostxl_periph.obj" \
 "./syscfg/board.obj" \
 "./syscfg/c2000ware_libraries.obj" \
+"./closed_loop_test.obj" \
 "./open_loop_test.obj" \
 "./peripheral_test.obj" \
 "./comms/biss_api.obj" \
@@ -23,6 +23,7 @@ ORDERED_OBJS += \
 "./control/transforms.obj" \
 "./device/F2837xD_CodeStartBranch.obj" \
 "./device/device.obj" \
+"./hal/hal_boostxl.obj" \
 "./sensors/current.obj" \
 "./sensors/voltage.obj" \
 "../2837xD_RAM_lnk_cpu1.cmd" \
@@ -41,11 +42,13 @@ RMDIR := RMDIR /S/Q
 -include comms/subdir_vars.mk
 -include control/subdir_vars.mk
 -include device/subdir_vars.mk
+-include hal/subdir_vars.mk
 -include sensors/subdir_vars.mk
 -include subdir_rules.mk
 -include comms/subdir_rules.mk
 -include control/subdir_rules.mk
 -include device/subdir_rules.mk
+-include hal/subdir_rules.mk
 -include sensors/subdir_rules.mk
 -include objects.mk
 
@@ -158,8 +161,8 @@ Driverlib\ Empty\ CPU1\ Example\ CCS\ Project.out: $(OBJS) $(CMD_SRCS) $(LIB_SRC
 # Other Targets
 clean:
 	-$(RM) $(GEN_MISC_FILES__QUOTED)$(GEN_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "boostxl_periph.obj" "syscfg\board.obj" "syscfg\c2000ware_libraries.obj" "open_loop_test.obj" "peripheral_test.obj" "comms\biss_api.obj" "comms\data_ingester.obj" "control\angle_ramp.obj" "control\pi.obj" "control\svpwm.obj" "control\transforms.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" "sensors\current.obj" "sensors\voltage.obj" 
-	-$(RM) "boostxl_periph.d" "syscfg\board.d" "syscfg\c2000ware_libraries.d" "open_loop_test.d" "peripheral_test.d" "comms\biss_api.d" "comms\data_ingester.d" "control\angle_ramp.d" "control\pi.d" "control\svpwm.d" "control\transforms.d" "device\device.d" "sensors\current.d" "sensors\voltage.d" 
+	-$(RM) "syscfg\board.obj" "syscfg\c2000ware_libraries.obj" "closed_loop_test.obj" "open_loop_test.obj" "peripheral_test.obj" "comms\biss_api.obj" "comms\data_ingester.obj" "control\angle_ramp.obj" "control\pi.obj" "control\svpwm.obj" "control\transforms.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" "hal\hal_boostxl.obj" "sensors\current.obj" "sensors\voltage.obj" 
+	-$(RM) "syscfg\board.d" "syscfg\c2000ware_libraries.d" "closed_loop_test.d" "open_loop_test.d" "peripheral_test.d" "comms\biss_api.d" "comms\data_ingester.d" "control\angle_ramp.d" "control\pi.d" "control\svpwm.d" "control\transforms.d" "device\device.d" "hal\hal_boostxl.d" "sensors\current.d" "sensors\voltage.d" 
 	-$(RM) "device\F2837xD_CodeStartBranch.d" 
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
 	-@echo 'Finished clean'

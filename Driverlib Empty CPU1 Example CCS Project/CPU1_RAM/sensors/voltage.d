@@ -2,7 +2,7 @@
 
 sensors/voltage.obj: ../sensors/voltage.c
 sensors/voltage.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/sensors/voltage.h
-sensors/voltage.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/boostxl_periph.h
+sensors/voltage.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/hal/hal_boostxl.h
 sensors/voltage.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h
 sensors/voltage.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/inc/hw_memmap.h
 sensors/voltage.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/adc.h
@@ -95,7 +95,7 @@ sensors/voltage.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_in
 
 C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/sensors/voltage.h:
 
-C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/boostxl_periph.h:
+C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/hal/hal_boostxl.h:
 
 C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/driverlib.h:
 

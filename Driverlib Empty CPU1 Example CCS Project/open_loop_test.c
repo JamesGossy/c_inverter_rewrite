@@ -9,7 +9,7 @@
 //   (no current feedback — pure open-loop).  Use this to verify PWM,
 //   gate drivers, and basic motor rotation before closing the current loop.
 //
-//   Signal chain (epwm4ISR, 20 kHz):
+//   Signal chain (currentControlISR / INT_ADCB1, 20 kHz):
 //     AngleRamp -> ParkInv(0, Vq) -> ClarkeInv -> SVPWM -> setDuty x3
 //
 //   Tuning knobs (adjust live in CCS Expressions):
@@ -26,12 +26,13 @@
 
 #include "driverlib.h"
 #include "device.h"
-#include "boostxl_periph.h"
+#include "hal/hal_boostxl.h"
 #include "sensors/voltage.h"
 #include "sensors/current.h"
 #include "control/angle_ramp.h"
 #include "control/transforms.h"
 #include "control/svpwm.h"
+#include "comms/biss_api.h"
 
 //-----------------------------------------------------------------------------
 // Control knobs — set from serial (vd,vq,freq,enable\r\n) or CCS Expressions
@@ -49,7 +50,14 @@ volatile float    iBAmps           = 0.0f;
 volatile float    iCAmps           = 0.0f;
 volatile float    vdcVolts         = 0.0f;
 volatile float    theta_rad        = 0.0f;
+volatile uint16_t biss_angle_raw    = 0U;   // 13-bit raw count from BiSS encoder (0-8191)
+volatile uint16_t biss_error        = 0U;   // last BiSS error code (0 = OK, see biss_api.h)
+volatile uint16_t biss_spi_status   = 0U;   // raw SPISTS register at time of RX
 volatile uint32_t timer0IsrCount   = 0U;
+
+// BiSS encoder is 13-bit (8192 counts/rev): angle = raw * 2π/8192
+#define BISS_COUNTS_PER_REV  8192U
+#define BISS_RAD_PER_COUNT   (6.28318530f / (float)BISS_COUNTS_PER_REV)
 
 //-----------------------------------------------------------------------------
 // Module-private state
@@ -60,109 +68,97 @@ static CurrentCalibration_t currentCal  = {0};
 #define CONTROL_TS  (1.0f / (float)PWM_SWITCHING_FREQ_HZ)   // 50 µs
 
 //-----------------------------------------------------------------------------
-// Serial telemetry TX
-// Format: "Ia,Ib,Ic,Vdc,theta\r\n"  (all floats, 2 decimal places)
+// Serial telemetry TX — binary, non-blocking
+// Frame (16 bytes): [0xAA][0x55][Ia:i16][Ib:i16][Ic:i16][Vdc:u16][θ:u16][θ_enc:u16][biss_err:u16]
+// Scales: currents ×100 (A), Vdc ×100 (V), θ ×10000 (rad), θ_enc ×10000 (rad), biss_err raw
+// Big-endian. Fits in the 16-deep SCI TX FIFO; takes ~37 µs at 3 Mbaud.
 //-----------------------------------------------------------------------------
-static uint16_t appendFloat(char *buf, uint16_t pos, float val)
+static void sendTelemetryBinary(void)
 {
-    char     tmp[6];
-    uint16_t len = 0;
-    uint16_t intPart;
-    uint16_t fracPart;
+    // Drop packet if the previous one is still draining (shouldn't happen at 1 kHz)
+    if (SCI_getTxFIFOStatus(SERIAL_SCI_BASE) != SCI_FIFO_TX0)
+        return;
 
-    if (val < 0.0f) { buf[pos++] = '-'; val = -val; }
+    int16_t  ia16   = (int16_t) (iAAmps           * 100.0f);
+    int16_t  ib16   = (int16_t) (iBAmps           * 100.0f);
+    int16_t  ic16   = (int16_t) (iCAmps           * 100.0f);
+    uint16_t vdc16  = (uint16_t)(vdcVolts          * 100.0f);
+    uint16_t th16   = (uint16_t)(theta_rad         * 10000.0f);
+    uint16_t enc16  = (uint16_t)((float)biss_angle_raw * BISS_RAD_PER_COUNT * 10000.0f);
 
-    intPart  = (uint16_t)val;
-    fracPart = (uint16_t)((val - (float)intPart) * 100.0f + 0.5f);
-    if (fracPart >= 100U) { intPart++; fracPart = 0U; }
-
-    do { tmp[len++] = (char)('0' + (intPart % 10U)); intPart /= 10U; } while (intPart);
-    uint16_t i = len;
-    while (i--) buf[pos++] = tmp[i];
-    
-    buf[pos++] = '.';
-    buf[pos++] = (char)('0' + (fracPart / 10U));
-    buf[pos++] = (char)('0' + (fracPart % 10U));
-    return pos;
-}
-
-static void sendTelemetry(void)
-{
-    char     buf[56];
-    uint16_t pos = 0;
-
-    pos = appendFloat(buf, pos, iAAmps);   buf[pos++] = ',';
-    pos = appendFloat(buf, pos, iBAmps);   buf[pos++] = ',';
-    pos = appendFloat(buf, pos, iCAmps);   buf[pos++] = ',';
-    pos = appendFloat(buf, pos, vdcVolts); buf[pos++] = ',';
-    pos = appendFloat(buf, pos, theta_rad);
-    buf[pos++] = '\r';
-    buf[pos++] = '\n';
-    buf[pos]   = '\0';
-    BOOSTXL_serialSendString(buf);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, 0xAAU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, 0x55U);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, ((uint16_t)ia16  >> 8U) & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, (uint16_t) ia16         & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, ((uint16_t)ib16  >> 8U) & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, (uint16_t) ib16         & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, ((uint16_t)ic16  >> 8U) & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, (uint16_t) ic16         & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, (vdc16  >> 8U) & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, vdc16           & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, (th16   >> 8U) & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, th16            & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, (enc16      >> 8U) & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, enc16              & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, (biss_error >> 8U) & 0xFFU);
+    SCI_writeCharNonBlocking(SERIAL_SCI_BASE, biss_error          & 0xFFU);
 }
 
 //-----------------------------------------------------------------------------
-// Serial command RX
-// Expected format: "vd,vq,freq,enable\r\n"  e.g. "0.00,5.00,10.00,1\r\n"
-// Non-blocking — call from main loop only.
+// Serial command RX — binary, non-blocking
+// Frame (10 bytes): [0xBB][0xCC][vd:i16][vq:i16][freq:u16][en:u8][cal:u8]
+// Scales: vd/vq ×100 (V), freq ×10 (Hz), en 0/1, cal 1=run calibration (only if en=0)
 //-----------------------------------------------------------------------------
-static char     rxBuf[48];
-static uint16_t rxPos = 0U;
+#define CMD_SYNC0      0xBBU
+#define CMD_SYNC1      0xCCU
+#define CMD_FRAME_LEN  10U
 
-static float parseFloat(const char **p)
-{
-    const char *s = *p;
-    float sign = 1.0f;
-    float val  = 0.0f;
-    float frac = 0.1f;
-
-    if (*s == '-') { sign = -1.0f; s++; }
-    while (*s >= '0' && *s <= '9') { val = val * 10.0f + (float)(*s - '0'); s++; }
-    if (*s == '.') {
-        s++;
-        while (*s >= '0' && *s <= '9') { val += (float)(*s - '0') * frac; frac *= 0.1f; s++; }
-    }
-    *p = s;
-    return sign * val;
-}
-
-static void handleCommand(const char *line)
-{
-    const char *p = line;
-    float vd   = parseFloat(&p); if (*p == ',') p++;
-    float vq   = parseFloat(&p); if (*p == ',') p++;
-    float freq = parseFloat(&p); if (*p == ',') p++;
-    float en   = parseFloat(&p);
-
-    // Clamp to safe ranges
-    if (vd   >  20.0f) vd   =  20.0f;
-    if (vd   < -20.0f) vd   = -20.0f;
-    if (vq   >  20.0f) vq   =  20.0f;
-    if (vq   < -20.0f) vq   = -20.0f;
-    if (freq >  200.0f) freq = 200.0f;
-    if (freq <    0.0f) freq =   0.0f;
-
-    openLoop_Vd     = vd;
-    openLoop_Vq     = vq;
-    openLoop_freqHz = freq;
-    openLoop_enable = (en > 0.5f) ? 1U : 0U;
-}
+static uint16_t rxBuf[CMD_FRAME_LEN];
+static uint16_t rxPos   = 0U;
+static uint16_t rxSyncd = 0U;
 
 static void pollSerial(void)
 {
     while (SCI_getRxFIFOStatus(SERIAL_SCI_BASE) != SCI_FIFO_RX0)
     {
-        char c = (char)(SCI_readCharNonBlocking(SERIAL_SCI_BASE) & 0xFFU);
-        if (c == '\n')
+        uint16_t b = SCI_readCharNonBlocking(SERIAL_SCI_BASE) & 0xFFU;
+
+        if (!rxSyncd)
         {
-            rxBuf[rxPos] = '\0';
-            handleCommand(rxBuf);
-            rxPos = 0U;
+            if      (rxPos == 0U && b == CMD_SYNC0) { rxBuf[rxPos++] = b; }
+            else if (rxPos == 1U && b == CMD_SYNC1) { rxBuf[rxPos++] = b; rxSyncd = 1U; }
+            else                                    { rxPos = 0U; }
         }
-        else if (c != '\r' && rxPos < (uint16_t)(sizeof(rxBuf) - 1U))
+        else
         {
-            rxBuf[rxPos++] = c;
+            rxBuf[rxPos++] = b;
+            if (rxPos == CMD_FRAME_LEN)
+            {
+                rxPos   = 0U;
+                rxSyncd = 0U;
+
+                int16_t  vd16   = (int16_t) ((rxBuf[2] << 8U) | rxBuf[3]);
+                int16_t  vq16   = (int16_t) ((rxBuf[4] << 8U) | rxBuf[5]);
+                uint16_t freq16 = (uint16_t)((rxBuf[6] << 8U) | rxBuf[7]);
+
+                float vd   = (float)vd16   * 0.01f;
+                float vq   = (float)vq16   * 0.01f;
+                float freq = (float)freq16 * 0.1f;
+
+                if (vd   >  20.0f) vd   =  20.0f;
+                if (vd   < -20.0f) vd   = -20.0f;
+                if (vq   >  20.0f) vq   =  20.0f;
+                if (vq   < -20.0f) vq   = -20.0f;
+                if (freq > 200.0f) freq = 200.0f;
+
+                openLoop_Vd     = vd;
+                openLoop_Vq     = vq;
+                openLoop_freqHz = freq;
+                openLoop_enable = (rxBuf[8] != 0U) ? 1U : 0U;
+
+                if (rxBuf[9] != 0U && openLoop_enable == 0U)
+                    Current_runCalibration(&currentCal);
+            }
         }
     }
 }
@@ -175,9 +171,32 @@ static void pollSerial(void)
 
 //-----------------------------------------------------------------------------
 // ISR prototypes
+//
+// Complete timing chain per PWM half-period (25 µs, count 0→2500):
+//
+//   Count 0     (0 µs)   — PWM counter zero, duty updates applied
+//   Count 1300  (13 µs)  — CMPC match → INT_EPWM4 (INT3.4)
+//                           → samplePositionNowISR:
+//                               GPIO123 = HIGH (FPGA latches BiSS position)
+//                               FPGA is SPI master — no MCU TX needed
+//   Count ~1300–1600      — FPGA decodes BiSS, sends result over SPI
+//                           (FPGA drives SCLK as SPI master)
+//                           → SPI RX data arrives at MCU
+//                           → INT_SPIA_RX (INT6.1)
+//                           → spiaRxISR: read + parse → biss_angle_raw
+//   Count 2500  (25 µs)  — CTR=PRD → SOCA → ADC samples phase currents
+//                           → ADC completes → INT_ADCB1 (INT1.2)
+//                           → currentControlISR:
+//                               reads biss_angle_raw + currents
+//                               Park/Clarke/SVPWM → duty update
+//   Count 2500→0         — Counter reverses (down-count)
+//
+// Priority (Simulink task priorities): INT1.2=30 (current ctrl), INT6.1=35, INT3.4=29 (sample)
+// Preemption: INT1.2 is preemptible; INT6.1 and INT3.4 are not.
 //-----------------------------------------------------------------------------
-__interrupt void spiaRxISR(void);
-__interrupt void epwm4ISR(void);
+__interrupt void samplePositionNowISR(void);    // INT3.4 — EPWM4 CMPC match, pulse GPIO123
+__interrupt void spiaRxISR(void);               // INT6.1 — SPI RX complete, parse packet
+__interrupt void currentControlISR(void);       // INT1.2 — ADCB1 complete, current control loop
 __interrupt void timer0ISR(void);
 
 //-----------------------------------------------------------------------------
@@ -218,10 +237,15 @@ void main(void)
     AngleRamp_init(&angleRamp, openLoop_freqHz, CONTROL_TS);
 
     // Register ISRs
+    // INT3.4: EPWM4 CMPC match (count 1300) → SamplePositionNow (pulses GPIO123 to FPGA)
+    Interrupt_register(INT_EPWM4,   &samplePositionNowISR);
+    // INT6.1: SPIA RX FIFO → ProcessReceivedPosition (parses FPGA SPI packet)
     Interrupt_register(INT_SPIA_RX, &spiaRxISR);
-    Interrupt_register(INT_EPWM4,   &epwm4ISR);
+    // INT1.2: ADCB1 completion → current control loop (reads biss_angle_raw)
+    Interrupt_register(INT_ADCB1,   &currentControlISR);
     Interrupt_register(INT_TIMER0,  &timer0ISR);
 
+    Interrupt_enable(INT_ADCB1);
     Interrupt_enable(INT_SPIA_RX);
     Interrupt_enable(INT_EPWM4);
     Interrupt_enable(INT_TIMER0);
@@ -255,7 +279,7 @@ void main(void)
         if ((timer0IsrCount - lastTeleTick) >= 2U)
         {
             lastTeleTick = timer0IsrCount;
-            sendTelemetry();
+            sendTelemetryBinary();
         }
 
         // LED heartbeat every 500 ms
@@ -268,9 +292,61 @@ void main(void)
 }
 
 //-----------------------------------------------------------------------------
-// INT3.4 — EPWM4 @ 20 kHz: open-loop voltage injection
+// INT3.4 — EPWM4 CMPC match (count 1300, 13 µs into half-period)
+//
+// Simulink task priority 29 (highest), non-preemptible.
+// Sets GPIO123 HIGH each cycle to tell the FPGA to latch the current BiSS
+// encoder position.  The pin is never cleared — it stays permanently HIGH
+// after the first execution, matching MiniGaN_SamplePositionNow.
+// The FPGA is the SPI master — it drives SCLK and sends the decoded position
+// back to the MCU automatically.  No MCU SPI TX here.
 //-----------------------------------------------------------------------------
-__interrupt void epwm4ISR(void)
+__interrupt void samplePositionNowISR(void)
+{
+    // Set GPIO123 HIGH — tells FPGA to latch current BiSS encoder position.
+    // Pin is never cleared; stays HIGH permanently after first cycle.
+    GPIO_writePin(BISS_FPGA_SAMPLE_GPIO, 1U);
+
+    // No SPI activity — FPGA is SPI master and will send data autonomously,
+    // triggering spiaRxISR (INT6.1) when the 16-bit word arrives.
+
+    EPWM_clearEventTriggerInterruptFlag(PHASE_C_PWM_BASE);
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP3);
+}
+
+//-----------------------------------------------------------------------------
+// INT6.1 — SPIA RX complete → ProcessReceivedPosition
+//
+// Simulink task priority 35, non-preemptible.
+// Fires when the FPGA (SPI master) has clocked a 16-bit position word into
+// the MCU RX FIFO.  Reads the word, captures SPI status, calls
+// processBissSpiPacket() to extract angle and error, and stores results in
+// volatile globals read by currentControlISR (INT1.2).
+//-----------------------------------------------------------------------------
+__interrupt void spiaRxISR(void)
+{
+    // Capture SPI status register before reading data (clears on read)
+    biss_spi_status = SPI_getInterruptStatus(BISS_SPI_BASE);
+
+    // Read 16-bit packet from FPGA and parse angle + error
+    processBissSpiPacket(SPI_readDataNonBlocking(BISS_SPI_BASE),
+                         &biss_error,
+                         &biss_angle_raw);
+
+    SPI_clearInterruptStatus(BISS_SPI_BASE, SPI_INT_RXFF);
+    SPI_resetRxFIFO(BISS_SPI_BASE);
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP6);
+}
+
+//-----------------------------------------------------------------------------
+// INT1.2 — ADCB1 completion → current control loop
+//
+// Simulink task priority 30, preemptible.
+// Fires after ADCB finishes sampling (triggered by EPWM4 SOCA at CTR=PRD,
+// 25 µs into the half-period).  Reads biss_angle_raw written by spiaRxISR
+// and runs the open-loop voltage injection.
+//-----------------------------------------------------------------------------
+__interrupt void currentControlISR(void)
 {
     float Valpha, Vbeta;
     float Va, Vb, Vc;
@@ -300,21 +376,11 @@ __interrupt void epwm4ISR(void)
         BOOSTXL_setDuty(PHASE_C_PWM_BASE, dutyC);
     }
 
-    // Kick BiSS encoder read
-    SPI_writeDataNonBlocking(BISS_SPI_BASE, 0xFFFF);
+    // Clear GPIO123 — Prepare for the next rising edge trigger in the next cycle
+    GPIO_writePin(BISS_FPGA_SAMPLE_GPIO, 0U);
 
-    EPWM_clearEventTriggerInterruptFlag(PHASE_A_PWM_BASE);
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP3);
-}
-
-//-----------------------------------------------------------------------------
-// INT6.1 — SPIA RX @ 20 kHz (BiSS completion)
-//-----------------------------------------------------------------------------
-__interrupt void spiaRxISR(void)
-{
-    (void)SPI_readDataNonBlocking(BISS_SPI_BASE);
-    SPI_clearInterruptStatus(BISS_SPI_BASE, SPI_INT_RXFF);
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP6);
+    ADC_clearInterruptStatus(IB_ADC_BASE, ADC_INT_NUMBER1);
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
 }
 
 //-----------------------------------------------------------------------------

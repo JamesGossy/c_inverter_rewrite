@@ -18,9 +18,9 @@ LIB_SRCS += \
 C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib 
 
 C_SRCS += \
-../boostxl_periph.c \
 ./syscfg/board.c \
 ./syscfg/c2000ware_libraries.c \
+../closed_loop_test.c \
 ../open_loop_test.c \
 ../peripheral_test.c 
 
@@ -34,9 +34,9 @@ GEN_MISC_DIRS += \
 ./syscfg 
 
 C_DEPS += \
-./boostxl_periph.d \
 ./syscfg/board.d \
 ./syscfg/c2000ware_libraries.d \
+./closed_loop_test.d \
 ./open_loop_test.d \
 ./peripheral_test.d 
 
@@ -45,9 +45,9 @@ GEN_OPTS += \
 ./syscfg/c2000ware_libraries.opt 
 
 OBJS += \
-./boostxl_periph.obj \
 ./syscfg/board.obj \
 ./syscfg/c2000ware_libraries.obj \
+./closed_loop_test.obj \
 ./open_loop_test.obj \
 ./peripheral_test.obj 
 
@@ -64,9 +64,9 @@ GEN_MISC_DIRS__QUOTED += \
 "syscfg" 
 
 OBJS__QUOTED += \
-"boostxl_periph.obj" \
 "syscfg\board.obj" \
 "syscfg\c2000ware_libraries.obj" \
+"closed_loop_test.obj" \
 "open_loop_test.obj" \
 "peripheral_test.obj" 
 
@@ -80,9 +80,9 @@ GEN_MISC_FILES__QUOTED += \
 "syscfg\clocktree.h" 
 
 C_DEPS__QUOTED += \
-"boostxl_periph.d" \
 "syscfg\board.d" \
 "syscfg\c2000ware_libraries.d" \
+"closed_loop_test.d" \
 "open_loop_test.d" \
 "peripheral_test.d" 
 
@@ -92,14 +92,14 @@ GEN_FILES__QUOTED += \
 "syscfg\c2000ware_libraries.opt" \
 "syscfg\c2000ware_libraries.c" 
 
-C_SRCS__QUOTED += \
-"../boostxl_periph.c" \
-"./syscfg/board.c" \
-"./syscfg/c2000ware_libraries.c" \
-"../open_loop_test.c" 
-
 SYSCFG_SRCS__QUOTED += \
 "../c2000.syscfg" 
+
+C_SRCS__QUOTED += \
+"./syscfg/board.c" \
+"./syscfg/c2000ware_libraries.c" \
+"../closed_loop_test.c" \
+"../open_loop_test.c" 
 
 EXE_SRCS__QUOTED += \
 "../sim_open_loop.exe" 

@@ -88,13 +88,14 @@ open_loop_test.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/inc/h
 open_loop_test.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/version.h
 open_loop_test.obj: C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/driver_inclusive_terminology_mapping.h
 open_loop_test.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h
-open_loop_test.obj: ../boostxl_periph.h
+open_loop_test.obj: ../hal/hal_boostxl.h
 open_loop_test.obj: C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h
 open_loop_test.obj: ../sensors/voltage.h
 open_loop_test.obj: ../sensors/current.h
 open_loop_test.obj: ../control/angle_ramp.h
 open_loop_test.obj: ../control/transforms.h
 open_loop_test.obj: ../control/svpwm.h
+open_loop_test.obj: ../comms/biss_api.h
 
 ../open_loop_test.c:
 
@@ -272,7 +273,7 @@ C:/ti/C2000Ware_6_00_01_00/driverlib/f2837xd/driverlib/driver_inclusive_terminol
 
 C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h:
 
-../boostxl_periph.h:
+../hal/hal_boostxl.h:
 
 C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driverlib\ Empty\ CPU1\ Example\ CCS\ Project/device/device.h:
 
@@ -285,4 +286,6 @@ C:/Users/hames/OneDrive/Documents/Engineering/Projects/c_inverter_rewrite/Driver
 ../control/transforms.h:
 
 ../control/svpwm.h:
+
+../comms/biss_api.h:
 

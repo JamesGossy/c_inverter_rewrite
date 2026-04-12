@@ -1,7 +1,7 @@
 #ifndef SENSORS_CURRENT_H
 #define SENSORS_CURRENT_H
 
-#include "boostxl_periph.h"
+#include "hal/hal_boostxl.h"
 
 //-----------------------------------------------------------------------------
 // Current sensor calibration

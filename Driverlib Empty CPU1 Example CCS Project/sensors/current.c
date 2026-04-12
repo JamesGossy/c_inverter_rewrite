@@ -25,9 +25,17 @@ void Current_runCalibration(CurrentCalibration_t *cal)
 
     for(i = 0; i < CURRENT_CAL_SAMPLES; i++)
     {
+        ADC_forceSOC(IB_ADC_BASE, IB_ADC_SOC);
+        ADC_forceSOC(IC_ADC_BASE, IC_ADC_SOC);
+
+        while(ADC_getInterruptStatus(IB_ADC_BASE, ADC_INT_NUMBER1) == false);
+        ADC_clearInterruptStatus(IB_ADC_BASE, ADC_INT_NUMBER1);
+
+        while(ADC_getInterruptStatus(IC_ADC_BASE, ADC_INT_NUMBER1) == false);
+        ADC_clearInterruptStatus(IC_ADC_BASE, ADC_INT_NUMBER1);
+
         sumB += ADC_readResult(IB_ADC_RESULT_BASE, IB_ADC_SOC);
         sumC += ADC_readResult(IC_ADC_RESULT_BASE, IC_ADC_SOC);
-        DEVICE_DELAY_US(100);   // wait for next 20 kHz conversion (50 us period)
     }
 
     cal->offsetB = (float)sumB / (float)CURRENT_CAL_SAMPLES;
